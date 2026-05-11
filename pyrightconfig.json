@@ -1,0 +1,14 @@
+{
+  "pythonVersion": "3.13",
+  "venvPath": ".",
+  "venv": ".venv",
+  "typeCheckingMode": "standard",
+  "reportDeprecated": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownParameterType": "none",
+  "reportCallInDefaultInitializer": "none",
+  "reportMissingTypeArgument": "none",
+  "reportUnusedParameter": "warning"
+}

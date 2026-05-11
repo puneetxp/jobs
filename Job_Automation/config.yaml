@@ -1,0 +1,50 @@
+# ==========================================
+# Stealth Job Pipeline Configuration
+# ==========================================
+
+# 1. Search Parameters
+search:
+  platform: "naukri" # "linkedin" or "naukri"
+  titles:
+    - "Machine Learning Engineer"
+    - "Ai Engineer"
+    - "Prompt Engineer"
+    - "Agentic AI Engineer"
+    - "AI/ML Engineer"
+    - "LangChain"
+    - "LLM"
+    - "LangGraph"
+    - "AIOps Engineer"
+    - "MLOps Engineer"
+  # STANDARD FOR LOCATIONS:
+  # If "Remote" (or WFH) is included in the list alongside physical cities,
+  # the orchestrator will OVERRIDE and strictly strip out the cities to perform
+  # a pure Remote search instead of a mixed Hybrid search.
+  # To search physical cities, remove "Remote" from this list.
+  locations:
+    - "Gurugram"
+  #  - "Gurgaon"
+  max_jobs: 40
+  past_24_hours: true # true: only fetch jobs posted in last 24h. false: fetch all.
+  headless: false # Set to false to see the browser, true for background scraping
+  page_size: 20
+
+# 2. Evaluation & System Settings
+evaluation:
+  llm_provider: "bedrock" # "gemini" or "groq"
+  threshold: 50 # Minimum match score to generate a tailored resume
+  base_resume_path: "./resume.pdf" # e.g., "C:/Users/karti/Documents/My_Resume.pdf" (Leave empty to default to resume.pdf in project root)
+  output_path: "./output" # e.g., "D:/Job_Search/Output" (Leave empty to default to 'output/' folder in project root)
+
+# 3. Candidate Profile Details (Deterministically injected into customized resumes)
+profile:
+  linkedin: "https://www.linkedin.com/in/kartik-lohar"
+  github: "https://github.com/Kartik-Lohar"
+  portfolio: "https://codebasics.io/portfolio/Kartik-Lohar"
+
+  # Vector Search Profile — used for semantic job matching via ChromaDB
+  # Write a plain-text summary of your skills, experience, and job preferences.
+  # The more specific this is, the better the vector match scores.
+  # Leave empty ("") to disable vector scoring and use only LLM scores.
+  profile_text: >
+    Full Stack Web Developer and Backend Architect with 6+ years of experience building scalable web platforms, high-performance LAMP applications, and modern JavaScript systems. Experienced in system design, backend architecture, performance optimization, and AI-powered solutions using AWS Bedrock, LangChain, LangGraph, PostgreSQL, and vector search workflows. Strong track record of delivering business impact through scalable product development, automation, and intelligent platform integrations across e-commerce, rental, tax, job portal, and event-tech domains.

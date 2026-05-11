@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Assistant Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d26;
+      --surface2: #22263a;
+      --border: #2e3248;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --primary: #4f8ef7;
+      --primary-hover: #3a7ae0;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --radius: 10px;
+      --font: 'Inter', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* Layout */
+    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .main { padding: 2rem; overflow-y: auto; }
+
+    /* Logo */
+    .logo { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .logo svg { color: var(--primary); }
+    .logo span { font-size: 1rem; font-weight: 700; color: var(--text); }
+
+    /* Nav */
+    .nav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.75rem; border-radius: 8px; color: var(--muted); font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; background: none; width: 100%; text-align: left; transition: all 180ms ease; }
+    .nav-item:hover, .nav-item.active { background: var(--surface2); color: var(--text); }
+    .nav-item.active { color: var(--primary); }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+    .stat-card .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .stat-card .value { font-size: 1.75rem; font-weight: 700; color: var(--text); }
+    .stat-card .sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+    .stat-card.accent .value { color: var(--primary); }
+    .stat-card.green .value { color: var(--success); }
+    .stat-card.yellow .value { color: var(--warning); }
+    
+    /* Screening Questions Styles */
+    .question-item {
+      background: var(--surface2);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .question-item p {
+      margin-top: 0;
+      font-size: 0.9rem;
+    }
+    .screening-answer {
+      font-family: inherit;
+      resize: vertical;
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .badge-danger {
+      background: #fee2e2;
+      color: #ef4444;
+      font-size: 0.7rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(79, 142, 247, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(79, 142, 247, 0);
+      }
+    }
+
+    /* Header */
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.25rem; font-weight: 700; }
+    .page-header p { font-size: 0.875rem; color: var(--muted); margin-top: 0.2rem; }
+    .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+    /* Filters */
+    .filters { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center; }
+    .filter-btn { padding: 0.375rem 0.875rem; border-radius: 9999px; font-size: 0.8125rem; font-weight: 500; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all 180ms ease; }
+    .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .filter-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .search-input { padding: 0.375rem 0.875rem; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 0.875rem; outline: none; width: 200px; }
+    .search-input:focus { border-color: var(--primary); }
+
+    /* Table */
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead th { padding: 0.75rem 1rem; background: var(--surface2); color: var(--muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; border-bottom: 1px solid var(--border); transition: all 150ms ease; }
+    thead th.sortable:hover { background: var(--border); color: var(--text); cursor: pointer; }
+    thead th.sorted-header { color: var(--primary); font-weight: 700; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 150ms ease; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td { padding: 0.875rem 1rem; vertical-align: middle; }
+
+    /* Score badge */
+    .score { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 24px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; }
+    .score.high { background: rgba(52, 211, 153, 0.15); color: var(--success); }
+    .score.med { background: rgba(251, 191, 36, 0.15); color: var(--warning); }
+    .score.low { background: rgba(248, 113, 113, 0.15); color: var(--danger); }
+    .score.unevaluated { background: rgba(136, 146, 164, 0.15); color: var(--muted); font-size: 0.8rem; }
+
+    /* Platform badge */
+    .platform { padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .platform.indeed { background: rgba(79, 142, 247, 0.15); color: var(--primary); }
+    .platform.linkedin { background: rgba(10, 102, 194, 0.2); color: #60a5fa; }
+    .platform.naukri { background: rgba(255, 155, 41, 0.15); color: #fb923c; }
+
+    /* Freshness */
+    .fresh { font-size: 0.75rem; font-weight: 600; }
+    .fresh.hot { color: var(--success); }
+    .fresh.warm { color: var(--warning); }
+    .fresh.cold { color: var(--muted); }
+
+    /* Job title / company */
+    .job-title { font-weight: 600; color: var(--text); text-decoration: none; line-height: 1.3; }
+    .job-title:hover { color: var(--primary); }
+    .job-company { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.375rem 0.875rem; border-radius: 8px; font-size: 0.8125rem; font-weight: 600; border: none; cursor: pointer; text-decoration: none; transition: all 180ms ease; white-space: nowrap; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: rgba(52, 211, 153, 0.15); color: var(--success); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .btn-success:hover { background: rgba(52, 211, 153, 0.25); }
+    .btn-ghost { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { color: var(--text); border-color: var(--primary); }
+    .actions { display: flex; flex-direction: column; gap: 0.4rem; min-width: 250px; width: 100%; }
+    .actions-row { display: flex; gap: 0.4rem; width: 100%; }
+    .actions-row .btn { flex: 1; justify-content: center; padding: 0.35rem 0.5rem; font-size: 0.75rem; }
+    .btn-apply { width: 100%; justify-content: center; text-align: center; }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+    .empty svg { margin: 0 auto 1rem; opacity: 0.3; }
+    .empty h3 { font-size: 1rem; color: var(--text); margin-bottom: 0.5rem; }
+    .empty p { font-size: 0.875rem; max-width: 30ch; margin: 0 auto 1.5rem; }
+
+    /* Toast */
+    #toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.875rem 1.25rem; font-size: 0.875rem; box-shadow: 0 8px 32px rgba(0,0,0,0.4); transform: translateY(120%); opacity: 0; transition: all 300ms ease; z-index: 999; max-width: 320px; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: var(--success); color: var(--success); }
+    #toast.error { border-color: var(--danger); color: var(--danger); }
+
+    /* Drawer */
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; }
+    .drawer-overlay.open { display: block; }
+    .drawer { position: fixed; right: 0; top: 0; bottom: 0; width: min(480px, 95vw); background: var(--surface); border-left: 1px solid var(--border); z-index: 101; transform: translateX(100%); transition: transform 300ms ease; overflow-y: auto; padding: 1.5rem; }
+    .drawer.open { transform: translateX(0); }
+    .drawer h2 { font-size: 1.125rem; font-weight: 700; margin-bottom: 1.5rem; }
+    .draft-field { margin-bottom: 1.25rem; }
+    .draft-field label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .draft-field textarea { width: 100%; min-height: 200px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; color: var(--text); font-size: 0.875rem; font-family: var(--font); resize: vertical; outline: none; }
+    .draft-field textarea:focus { border-color: var(--primary); }
+    .draft-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.25rem; }
+
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .filters { gap: 0.5rem; }
+      .search-input { width: 100%; }
+      table thead { display: none; }
+      tbody tr { display: block; padding: 0.75rem 1rem; }
+      tbody td { display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; border: none; }
+      tbody td::before { content: attr(data-label); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    }
+
+    /* Pagination */
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.5rem; padding: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+    .pagination-btn { padding: 0.5rem 1rem; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); cursor: pointer; transition: all 180ms ease; font-size: 0.875rem; }
+    .pagination-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    
+    /* Details Expander styles */
+    .details-text {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .details-text:hover {
+      color: var(--text);
+    }
+    .details-text.expanded {
+      display: block !important;
+      -webkit-line-clamp: none !important;
+      overflow: visible !important;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="Job Assistant logo">
+        <rect width="28" height="28" rx="7" fill="#4f8ef7" fill-opacity="0.15"/>
+        <path d="M7 10h14M7 14h10M7 18h6" stroke="#4f8ef7" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="21" cy="18" r="3" stroke="#4f8ef7" stroke-width="1.5"/>
+        <path d="M23.5 20.5L25 22" stroke="#4f8ef7" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span>Job Assistant</span>
+    </div>
+    <button class="nav-item active" onclick="filterPlatform('all')">📋 All Jobs</button>
+    <button class="nav-item" onclick="filterPlatform('indeed')">🔍 Indeed</button>
+    <button class="nav-item" onclick="filterPlatform('linkedin')">💼 LinkedIn</button>
+    <button class="nav-item" onclick="filterPlatform('naukri')">🇮🇳 Naukri</button>
+    <div style="flex:1"></div>
+    <div style="font-size:0.75rem; color:var(--muted); padding: 0.5rem 0.75rem;">
+      Skills: {{ settings.skills[:5]|join(', ') }}…
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h1>Job Dashboard</h1>
+        <p>Puneet Sharma &mdash; {{ settings.locations|join(' / ') }}</p>
+      </div>
+    <div class="header-actions">
+        <button class="btn btn-primary" id="btn-run" onclick="triggerSearch()">🚀 Run Search</button>
+        <button class="btn btn-ghost" id="btn-accept-invitations" onclick="triggerAcceptInvitations()" style="color: var(--success); border-color: var(--success);">🤝 Accept LinkedIn Invites</button>
+        <button class="btn btn-ghost" id="btn-retry-failed" onclick="triggerRetryFailed()" style="color: var(--primary); border-color: var(--primary);">🔄 Retry Failed AI</button>
+        <button class="btn btn-ghost" id="btn-check-availability" onclick="triggerAvailabilityCheck()" style="color: var(--warning); border-color: var(--warning);">🔗 Check Active</button>
+        <button class="btn btn-ghost" id="btn-pause" onclick="togglePause()" style="display: none;">⏸️ Pause</button>
+        <button class="btn btn-ghost" id="btn-stop" onclick="stopSearch()" style="display: none; color: var(--danger); border-color: var(--danger);">🛑 Stop</button>
+        <button class="btn btn-ghost" id="btn-clear" onclick="clearData()" style="color: var(--danger); border-color: var(--danger);">🗑️ Clear Data</button>
+        
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: 1rem; padding-left: 1rem; border-left: 1px solid var(--border);">
+          <label for="page-size-select" style="font-size: 0.875rem; color: var(--text-muted);">Per page:</label>
+          <select id="page-size-select" class="btn btn-ghost" style="padding: 0.25rem 0.5rem;" onchange="changePageSize(this.value)">
+            <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+            <option value="20" {% if page_size == 20 %}selected{% endif %}>20</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option>
+          </select>
+        </div>
+        
+        <button class="btn btn-ghost" onclick="location.reload()">↻ Refresh</button>
+        <a href="/docs" target="_blank" class="btn btn-ghost">API Docs</a>
+      </div>
+    </div>
+
+    <!-- Live Search Progress Widget -->
+    <div id="search-progress-card" class="stat-card" style="display: none; background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1px solid var(--primary); margin-bottom: 1.5rem; align-items: center; justify-content: space-between; padding: 1rem 1.5rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div class="pulse-ring" style="width: 12px; height: 12px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 0 rgba(79, 142, 247, 0.7); animation: pulse 1.5s infinite;"></div>
+        <div>
+          <div style="font-weight: 600; color: var(--text); font-size: 0.9rem;" id="progress-text">🔍 Initializing Search...</div>
+          <div style="font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem;" id="progress-sub">Checking platforms...</div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="font-size: 0.85rem; font-weight: 600; color: var(--primary); background: rgba(79,142,247,0.1); padding: 0.25rem 0.75rem; border-radius: 12px;" id="progress-badge">SEARCHING</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat-card accent">
+        <div class="label">Today</div>
+        <div class="value">{{ today_count }}</div>
+        <div class="sub">new listings</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">This week</div>
+        <div class="value">{{ week_count }}</div>
+        <div class="sub">jobs ingested</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="label">Top matches</div>
+        <div class="value">{{ top_matches_count }}</div>
+        <div class="sub">score &gt; 70%</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Platforms</div>
+        <div class="value">3</div>
+        <div class="sub">Indeed · LinkedIn · Naukri</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <input class="search-input" type="search" placeholder="Search title or company…" id="search" oninput="applySearch()" />
+      
+      <span style="font-size: 0.85rem; color: var(--muted); align-self: center; margin-left: 0.5rem;">Status:</span>
+      <button class="filter-btn active" onclick="filterStatus('new')">🆕 New</button>
+      <button class="filter-btn" onclick="filterStatus('applied')">✔️ Applied</button>
+      <button class="filter-btn" onclick="filterStatus('ignored')">🗑️ Ignored</button>
+
+      <span style="font-size: 0.85rem; color: var(--muted); align-self: center; margin-left: 0.5rem;">Freshness:</span>
+      <button class="filter-btn active" data-fresh="all" onclick="filterFresh('all')">All</button>
+      <button class="filter-btn" data-fresh="1h" onclick="filterFresh('1h')">🔥 &lt;1h</button>
+      <button class="filter-btn" data-fresh="24h" onclick="filterFresh('24h')">Today</button>
+      <button class="filter-btn" data-fresh="3d" onclick="filterFresh('3d')">3 days</button>
+      <button class="filter-btn" data-fresh="7d" onclick="filterFresh('7d')">7 days</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      {% if jobs %}
+      <table id="jobs-table">
+        <thead>
+          <tr>
+            <th class="sortable sorted-header" onclick="sortTable(0)" style="user-select: none;">Score ▼</th>
+            <th class="sortable" onclick="sortTable(1)" style="user-select: none;">Platform ↕</th>
+            <th class="sortable" onclick="sortTable(2)" style="user-select: none;">Job ↕</th>
+            <th class="sortable" onclick="sortTable(3)" style="user-select: none;">Location ↕</th>
+            <th>Details</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="jobs-body">
+          {% for job in jobs %}
+          <tr id="job-row-{{ job.id }}" data-platform="{{ job.platform }}" data-fresh="{{ job.freshness_bucket }}" data-title="{{ job.title|lower }}" data-company="{{ (job.company or '')|lower }}">
+            <td data-label="Score">
+              <span class="score {% if job.match_score is none %}unevaluated{% elif job.match_score >= 85 %}high{% elif job.match_score >= 70 %}med{% else %}low{% endif %}" title="Vector: {{ job.vector_score or 0 }}">
+                {% if job.match_score is none %}
+                  —
+                {% else %}
+                  {{ '%.0f'|format(job.match_score) }}%
+                {% endif %}
+              </span>
+            </td>
+            <td data-label="Platform">
+              <span class="platform {{ job.platform }}">{{ job.platform }}</span>
+            </td>
+            <td data-label="Job">
+              <a href="{{ job.url }}" target="_blank" class="job-title">{{ job.title[:70] }}{% if job.title|length > 70 %}…{% endif %}</a>
+              <div class="job-company">{{ job.company or '—' }}</div>
+              <div class="missing-skills-container">
+                {% if job.missing_skills %}
+                <div style="font-size: 0.7rem; color: var(--danger); margin-top: 0.25rem;">
+                  Missing: {{ job.missing_skills|join(', ')|truncate(80, True, '...') }}
+                </div>
+                {% endif %}
+              </div>
+            </td>
+            <td data-label="Location">{{ job.location or ('Remote' if job.remote else '—') }}</td>
+            <td data-label="Details" style="max-width: 550px; min-width: 300px;">
+              <div class="details-text" onclick="toggleDetails(this)" title="Click to expand/collapse">
+                {{ job.readiness_assessment or 'No assessment available' }}
+              </div>
+            </td>
+            <td data-label="Actions">
+              <div class="actions">
+                <div class="actions-row">
+                  <button class="btn btn-ghost" onclick="openDraft({{ job.id }}, '{{ job.title|replace("'", "\\'")|replace('"', '&quot;')|truncate(40) }}', '{{ (job.company or '')|replace("'", "\\'")|replace('"', '&quot;') }}')">✍ Draft</button>
+                  <button class="btn btn-ghost" onclick="reEvaluateJob({{ job.id }}, this)" title="Re-evaluate with AI">🔄 Eval</button>
+                  <button class="btn btn-ghost" onclick="markApplied({{ job.id }}, this)" title="Mark as Applied" style="color: var(--success); border-color: rgba(46, 213, 115, 0.2);">✔️ Applied</button>
+                  <button class="btn btn-ghost" onclick="markIgnored({{ job.id }}, this)" title="Ignore Job" style="color: var(--danger); border-color: rgba(255, 71, 87, 0.2);">❌ Ignore</button>
+                </div>
+                <a href="{{ job.url }}" target="_blank" class="btn btn-success btn-apply">Apply →</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="12" width="32" height="28" rx="3" stroke="currentColor" stroke-width="2"/><path d="M16 12V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3" stroke="currentColor" stroke-width="2"/><path d="M20 24h8M20 30h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <h3>No jobs yet</h3>
+        <p>Ingest jobs via the API or add them manually.</p>
+        <button onclick="triggerSearch()" class="btn btn-primary">Run Initial Search</button>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination" id="pagination-controls" {% if not jobs or total_pages <= 1 %}style="display: none;"{% endif %}>
+      <button class="pagination-btn" id="prev-page" onclick="changePage('prev')" {% if current_page <= 1 %}disabled{% endif %}>Previous</button>
+      <div class="pagination-info">
+        Page <span id="current-page-num">{{ current_page }}</span> of <span id="total-pages-num">{{ total_pages }}</span> 
+        (<span id="total-count-num">{{ total_count }}</span> jobs)
+      </div>
+      <button class="pagination-btn" id="next-page" onclick="changePage('next')" {% if current_page >= total_pages %}disabled{% endif %}>Next</button>
+    </div>
+  </main>
+</div>
+
+<!-- Draft Drawer -->
+<div class="drawer-overlay" id="overlay" onclick="closeDraft()"></div>
+<div class="drawer" id="drawer">
+  <button class="draft-close" onclick="closeDraft()">✕</button>
+  <h2 id="drawer-title">Cover Letter Draft</h2>
+  <div id="drawer-content">
+    <div class="draft-field">
+      <label>Cover Letter</label>
+      <textarea id="cover-letter-text" placeholder="Generating…"></textarea>
+    </div>
+    <div class="draft-field">
+      <label>Readiness Assessment</label>
+      <div id="readiness-text" style="font-size: 0.875rem; color: var(--muted); padding: 0.75rem; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border);"></div>
+    </div>
+    <div class="draft-field" id="screening-questions-section">
+      <label>Automated Screening Questions (Naukri)</label>
+      <div id="screening-questions-container" style="min-height: 50px;">
+        <p class="text-muted">No questions detected yet.</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="copyDraft()">Copy Letter</button>
+      <button class="btn btn-success" id="btn-naukri-submit" style="display:none;" onclick="submitAllNaukriAnswers(event)">🚀 Submit to Naukri</button>
+      <button class="btn btn-ghost" onclick="closeDraft()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  // Filter by platform
+  let activePlatform = 'all';
+  let activeFresh = 'all';
+  let activeStatus = 'new';
+  let currentPage = {{ current_page }};
+  let totalPages = {{ total_pages }};
+  let pageSize = {{ page_size }};
+  let currentSortCol = 0; // Default sorted by Score (column 0)
+  let currentSortAsc = false; // Descending by default for Score!
+  let currentDraftJobId = null;
+
+  async function fetchNaukriQuestions(jobId, forceRefresh = false) {
+    const container = document.getElementById('screening-questions-container');
+    if (!container) return;
+    container.innerHTML = '<div class="loading-spinner"></div><p>Fetching real screening questions from Naukri...</p>';
+    
+    try {
+      const url = `/api/jobs/${jobId}/naukri-questions` + (forceRefresh ? '?force_refresh=true' : '');
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      if (data.error) {
+        container.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; background: rgba(255, 71, 87, 0.05); border: 1px solid rgba(255, 71, 87, 0.15); border-radius: 8px;">
+            <p class="text-danger" style="margin: 0; font-size: 0.85rem;">Error: ${data.error}</p>
+            <button class="btn btn-ghost" onclick="fetchNaukriQuestions(${jobId}, true)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 6px; align-self: flex-start;">🔄 Retry Fetch</button>
+          </div>
+        `;
+        return;
+      }
+      
+      if (!data.questions || data.questions.length === 0) {
+        container.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem; background: rgba(52, 211, 153, 0.05); border: 1px solid rgba(52, 211, 153, 0.15); border-radius: 8px;">
+            <p class="text-success" style="margin: 0; font-size: 0.85rem;">✅ No mandatory screening questions cached for this job!</p>
+            <button class="btn btn-ghost" onclick="fetchNaukriQuestions(${jobId}, true)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 6px;">🔄 Force Fetch</button>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <h4 style="margin: 0;">Screening Questions</h4>
+          <button class="btn btn-ghost" onclick="fetchNaukriQuestions(${jobId}, true)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 6px;">🔄 Force Refresh</button>
+        </div>
+      `;
+      const list = document.createElement('div');
+      list.className = 'questions-list';
+      
+      data.questions.forEach(q => {
+        const item = document.createElement('div');
+        item.className = 'question-item';
+        item.style.marginBottom = '1.5rem';
+        item.innerHTML = `
+          <p style="margin-bottom: 0.5rem;"><strong>Q: ${q.text}</strong> ${q.mandatory ? '<span class="badge badge-danger">Mandatory</span>' : ''}</p>
+          <div class="answer-box">
+            <textarea class="form-control screening-answer" data-qid="${q.id}" style="width:100%; min-height:80px;" placeholder="Generating suggested answer..."></textarea>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+      container.appendChild(list);
+      
+      // Show submit button
+      const submitBtn = document.getElementById('btn-naukri-submit');
+      if (submitBtn) submitBtn.style.display = 'inline-flex';
+      
+      // Request LLM to suggest answers for these specific questions
+      suggestNaukriAnswers(jobId, data.questions);
+      
+    } catch (e) {
+      container.innerHTML = `<p class="text-danger">Failed to fetch questions: ${e.message}</p>`;
+    }
+  }
+
+  async function suggestNaukriAnswers(jobId, questions) {
+    try {
+      // Call draft endpoint again but this time with specific questions
+      const res = await fetch(`/api/jobs/${jobId}/draft`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: questions })
+      });
+      const data = await res.json();
+      
+      if (data.screening_answers) {
+        const textareas = document.querySelectorAll('.screening-answer');
+        textareas.forEach(ta => {
+          const qid = ta.getAttribute('data-qid');
+          const qItem = questions.find(q => String(q.id) === String(qid));
+          
+          if (qItem) {
+            // 1. Try exact match first
+            let answerText = data.screening_answers[qItem.text];
+            
+            // 2. Try loose/fuzzy match if exact match fails
+            if (!answerText) {
+              const cleanString = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+              const cleanQ = cleanString(qItem.text);
+              
+              for (const [key, val] of Object.entries(data.screening_answers)) {
+                const cleanKey = cleanString(key);
+                if (cleanKey === cleanQ || cleanKey.includes(cleanQ) || cleanQ.includes(cleanKey)) {
+                  answerText = val;
+                  break;
+                }
+              }
+            }
+            
+            // 3. Populate textarea or clean placeholder if no answer was generated
+            if (answerText) {
+              ta.value = answerText;
+            } else {
+              ta.value = '';
+              ta.setAttribute('placeholder', 'Enter your answer here...');
+            }
+          }
+        });
+      }
+    } catch (e) {
+      console.error("Failed to suggest answers:", e);
+    }
+  }
+
+  async function submitAllNaukriAnswers(event) {
+    const textareas = document.querySelectorAll('.screening-answer');
+    const answers = [];
+    textareas.forEach(ta => {
+      answers.push({
+        id: ta.getAttribute('data-qid'),
+        text: ta.value
+      });
+    });
+
+    if (answers.some(a => !a.text.trim())) {
+      if (!confirm("Some mandatory questions are blank. Submit anyway?")) return;
+    }
+
+    const force = event && event.shiftKey;
+    const btn = document.getElementById('btn-naukri-submit');
+    const originalText = btn.textContent;
+    btn.textContent = force ? '⏳ Force Submitting...' : '⏳ Submitting...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`/api/jobs/${currentDraftJobId}/naukri-submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers, force })
+      });
+      const data = await res.json();
+      if (data.status === 'success' || data.statusCode === 0) {
+        showToast(force ? 'Successfully force-submitted answers to Naukri!' : 'Successfully submitted answers to Naukri!', 'success');
+      } else {
+        showToast(`Submission failed: ${data.error || 'Unknown error'}`, 'error');
+      }
+    } catch (e) {
+      showToast(`Error: ${e.message}`, 'error');
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  }
+
+  function filterPlatform(platform) {
+    activePlatform = platform;
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    // Find the button that was clicked or the one matching the platform
+    const btns = document.querySelectorAll('.nav-item');
+    btns.forEach(btn => {
+      if (btn.textContent.toLowerCase().includes(platform.toLowerCase())) {
+        btn.classList.add('active');
+      } else if (platform === 'all' && btn.textContent.includes('All Jobs')) {
+        btn.classList.add('active');
+      }
+    });
+    currentPage = 1;
+    fetchJobs();
+  }
+
+  function filterFresh(fresh) {
+    activeFresh = fresh;
+    currentPage = 1;
+    document.querySelectorAll('.filter-btn[onclick*="filterFresh"]').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.getAttribute('onclick').includes(`'${fresh}'`)) btn.classList.add('active');
+    });
+    fetchJobs();
+  }
+
+  function changePageSize(size) {
+    pageSize = parseInt(size);
+    currentPage = 1;
+    fetchJobs();
+  }
+
+  function changePage(direction) {
+    let newPage = currentPage;
+    if (direction === 'prev') {
+      newPage = currentPage - 1;
+    } else if (direction === 'next') {
+      newPage = currentPage + 1;
+    } else {
+      newPage = parseInt(direction);
+    }
+    
+    if (newPage < 1 || newPage > totalPages) return;
+    currentPage = newPage;
+    fetchJobs();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function applySearch() { 
+    // Client-side search still works on the current page for speed
+    const q = document.getElementById('search').value.toLowerCase();
+    document.querySelectorAll('#jobs-body tr').forEach(row => {
+      const matchQ = !q || row.dataset.title.includes(q) || row.dataset.company.includes(q);
+      row.style.display = matchQ ? '' : 'none';
+    });
+  }
+
+  function sortTable(colIndex, keepDirection = false) {
+    const table = document.getElementById('jobs-table');
+    if (!table) return;
+    const tbody = document.getElementById('jobs-body') || table.querySelector('tbody');
+    if (!tbody) return;
+    
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    if (rows.length === 0) return;
+
+    if (!keepDirection) {
+      if (currentSortCol === colIndex) {
+        currentSortAsc = !currentSortAsc;
+      } else {
+        currentSortCol = colIndex;
+        currentSortAsc = colIndex !== 0; // Default descending for Score (0), ascending for others
+      }
+    }
+
+    // Update headers UI to show arrows
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach((th, idx) => {
+      // Clear arrows on other headers
+      th.innerHTML = th.innerHTML.replace(/ ↕| ▲| ▼/g, '');
+      if (idx === colIndex) {
+        th.innerHTML += currentSortAsc ? ' ▲' : ' ▼';
+        th.classList.add('sorted-header');
+      } else {
+        if (idx === 0 || idx === 1 || idx === 2 || idx === 3) {
+          th.innerHTML += ' ↕';
+        }
+        th.classList.remove('sorted-header');
+      }
+    });
+
+    // Sort rows
+    rows.sort((rowA, rowB) => {
+      let valA, valB;
+
+      if (colIndex === 0) {
+        // Score sorting (percentage)
+        const badgeA = rowA.querySelector("td[data-label='Score'] .score");
+        const badgeB = rowB.querySelector("td[data-label='Score'] .score");
+        valA = badgeA ? (parseFloat(badgeA.textContent.replace('%', '')) || 0) : 0;
+        valB = badgeB ? (parseFloat(badgeB.textContent.replace('%', '')) || 0) : 0;
+      } else if (colIndex === 1) {
+        // Platform sorting
+        valA = rowA.dataset.platform || '';
+        valB = rowB.dataset.platform || '';
+      } else if (colIndex === 2) {
+        // Job Title sorting
+        const titleA = rowA.querySelector('.job-title');
+        const titleB = rowB.querySelector('.job-title');
+        valA = titleA ? titleA.textContent.trim().toLowerCase() : '';
+        valB = titleB ? titleB.textContent.trim().toLowerCase() : '';
+      } else if (colIndex === 3) {
+        // Location sorting
+        const cellA = rowA.querySelector("td[data-label='Location']");
+        const cellB = rowB.querySelector("td[data-label='Location']");
+        valA = cellA ? cellA.textContent.trim().toLowerCase() : '';
+        valB = cellB ? cellB.textContent.trim().toLowerCase() : '';
+      } else {
+        return 0;
+      }
+
+      if (typeof valA === 'string') {
+        return currentSortAsc 
+          ? valA.localeCompare(valB) 
+          : valB.localeCompare(valA);
+      } else {
+        return currentSortAsc ? valA - valB : valB - valA;
+      }
+    });
+
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+  }
+
+  let pollIntervalId = null;
+
+  async function fetchJobs() {
+    try {
+      const params = new URLSearchParams({
+        platform: activePlatform,
+        freshness: activeFresh,
+        status: activeStatus,
+        page: currentPage,
+        page_size: pageSize
+      });
+      
+      const res = await fetch(`/api/jobs?${params.toString()}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const jobs = data.jobs;
+      totalPages = data.total_pages;
+      
+      // Update stats cards safely with defensive checks
+      const statToday = document.querySelector('.stat-card.accent .value');
+      if (statToday) statToday.textContent = data.today_count;
+      
+      const statWeek = document.querySelector('.stat-card.green .value');
+      if (statWeek) statWeek.textContent = data.week_count;
+      
+      const statYellow = document.querySelector('.stat-card.yellow .value');
+      if (statYellow) statYellow.textContent = data.top_matches_count;
+      
+      // Update pagination UI
+      const pagControls = document.getElementById('pagination-controls');
+      if (totalPages > 1) {
+        pagControls.style.display = 'flex';
+        document.getElementById('current-page-num').textContent = currentPage;
+        document.getElementById('total-pages-num').textContent = totalPages;
+        document.getElementById('total-count-num').textContent = data.total_count;
+        document.getElementById('prev-page').disabled = currentPage <= 1;
+        document.getElementById('next-page').disabled = currentPage >= totalPages;
+      } else {
+        pagControls.style.display = 'none';
+      }
+      
+      const wrap = document.querySelector('.table-wrap');
+      
+      if (jobs.length === 0) {
+        if (!document.getElementById('jobs-table') || currentPage === 1) {
+          wrap.innerHTML = `
+            <div class="empty">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><rect x="8" y="12" width="32" height="28" rx="3" stroke="currentColor" stroke-width="2"/><path d="M16 12V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3" stroke="currentColor" stroke-width="2"/><path d="M20 24h8M20 30h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              <h3>No jobs yet</h3>
+              <p>Try changing your filters or run a new search.</p>
+              <button onclick="triggerSearch()" class="btn btn-primary">Run Search</button>
+            </div>
+          `;
+        } else {
+          // If we are on a page that no longer has results, go back to page 1
+          currentPage = 1;
+          fetchJobs();
+        }
+        return;
+      }
+      
+      if (!document.getElementById('jobs-table')) {
+        wrap.innerHTML = `
+          <table id="jobs-table">
+            <thead>
+              <tr>
+                <th class="sortable sorted-header" onclick="sortTable(0)" style="user-select: none;">Score ▼</th>
+                <th class="sortable" onclick="sortTable(1)" style="user-select: none;">Platform ↕</th>
+                <th class="sortable" onclick="sortTable(2)" style="user-select: none;">Job ↕</th>
+                <th class="sortable" onclick="sortTable(3)" style="user-select: none;">Location ↕</th>
+                <th>Details</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="jobs-body"></tbody>
+          </table>
+        `;
+      }
+      const body = document.getElementById('jobs-body');
+      let html = '';
+      for (const job of jobs) {
+        const isUnevaluated = job.match_score === null || job.match_score === undefined;
+        const scoreClass = isUnevaluated ? 'unevaluated' : (job.match_score >= 85 ? 'high' : (job.match_score >= 70 ? 'med' : 'low'));
+        const displayScoreText = isUnevaluated ? '—' : (Math.round(job.match_score) + '%');
+        const displayTitle = job.title.length > 70 ? job.title.substring(0, 70) + '…' : job.title;
+        
+        // Safely escape title strings
+        const escTitle = job.title.replace(/'/g, "\\'");
+        const truncatedEscTitle = escTitle.length > 40 ? escTitle.substring(0, 40) + '...' : escTitle;
+        const missingSkillsHtml = job.missing_skills && job.missing_skills.length > 0 
+          ? `<div style="font-size: 0.7rem; color: var(--danger); margin-top: 0.25rem;">Missing: ${job.missing_skills.join(', ')}</div>`
+          : '';
+        const readinessHtml = job.readiness_assessment || 'No assessment available';
+        
+        html += `
+          <tr id="job-row-${job.id}" data-platform="${job.platform}" data-fresh="${job.freshness_bucket}" data-title="${job.title.toLowerCase()}" data-company="${(job.company || '').toLowerCase()}">
+            <td data-label="Score">
+              <span class="score ${scoreClass}" title="Vector: ${job.vector_score || 0}">
+                ${displayScoreText}
+              </span>
+            </td>
+            <td data-label="Platform">
+              <span class="platform ${job.platform}">${job.platform}</span>
+            </td>
+            <td data-label="Job">
+              <a href="${job.url}" target="_blank" class="job-title">${displayTitle}</a>
+              <div class="job-company">${job.company || '—'}</div>
+              <div class="missing-skills-container">${missingSkillsHtml}</div>
+            </td>
+            <td data-label="Location">${job.location || (job.remote ? 'Remote' : '—')}</td>
+             <td data-label="Details" style="max-width: 550px; min-width: 300px;">
+              <div class="details-text" onclick="toggleDetails(this)" title="Click to expand/collapse">
+                ${readinessHtml}
+              </div>
+            </td>
+            <td data-label="Actions">
+              <div class="actions">
+                <div class="actions-row">
+                  <button class="btn btn-ghost" onclick="openDraft(${job.id}, '${truncatedEscTitle}', '${job.company || ''}')">✍ Draft</button>
+                  <button class="btn btn-ghost" onclick="reEvaluateJob(${job.id}, this)" title="Re-evaluate with AI">🔄 Eval</button>
+                  <button class="btn btn-ghost" onclick="markApplied(${job.id}, this)" title="Mark as Applied" style="color: var(--success); border-color: rgba(46, 213, 115, 0.2);">✔️ Applied</button>
+                  <button class="btn btn-ghost" onclick="markIgnored(${job.id}, this)" title="Ignore Job" style="color: var(--danger); border-color: rgba(255, 71, 87, 0.2);">❌ Ignore</button>
+                </div>
+                <a href="${job.url}" target="_blank" class="btn btn-success btn-apply">Apply →</a>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+      body.innerHTML = html;
+      applySearch(); // Maintain search filter if any
+      sortTable(currentSortCol, true);
+    } catch (e) {
+      console.error("Error refreshing jobs list: ", e);
+    }
+  }
+
+  async function pollSearchStatus() {
+    try {
+      const res = await fetch('/api/search/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      
+      const card = document.getElementById('search-progress-card');
+      const text = document.getElementById('progress-text');
+      const sub = document.getElementById('progress-sub');
+      const badge = document.getElementById('progress-badge');
+      
+      if (data.running) {
+        card.style.display = 'flex';
+        text.textContent = data.progress;
+        
+        if (data.paused) {
+          sub.textContent = '⏸️ Search paused by user';
+          badge.textContent = 'PAUSED';
+          badge.style.color = 'var(--warning)';
+          badge.style.background = 'rgba(251, 191, 36, 0.1)';
+        } else if (data.stopped) {
+          sub.textContent = '🛑 Stopping current run...';
+          badge.textContent = 'STOPPING';
+          badge.style.color = 'var(--danger)';
+          badge.style.background = 'rgba(248, 113, 113, 0.1)';
+        } else {
+          sub.textContent = 'Scraping and evaluating matching listings...';
+          badge.textContent = 'ACTIVE';
+          badge.style.color = 'var(--primary)';
+          badge.style.background = 'rgba(79, 142, 247, 0.1)';
+        }
+        
+        document.getElementById('btn-run').style.display = 'none';
+        document.getElementById('btn-pause').style.display = 'inline-flex';
+        document.getElementById('btn-stop').style.display = 'inline-flex';
+        isPaused = data.paused;
+        document.getElementById('btn-pause').textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+        
+        // Refresh job listings live
+        await fetchJobs();
+      } else {
+        if (pollIntervalId) {
+          clearInterval(pollIntervalId);
+          pollIntervalId = null;
+        }
+        card.style.display = 'none';
+        resetSearchButtons();
+        await fetchJobs();
+        
+        if (data.progress.includes("completed") || data.progress.includes("Finished")) {
+          showToast(data.progress, 'success');
+        } else if (data.progress.includes("failed") || data.progress.includes("Error")) {
+          showToast(`Search error: ${data.progress}`, 'error');
+        }
+      }
+    } catch (e) {
+      console.error("Polling error: ", e);
+    }
+  }
+
+  // Trigger search
+  async function triggerSearch() {
+    document.getElementById('btn-run').style.display = 'none';
+    document.getElementById('btn-retry-failed').style.display = 'none';
+    document.getElementById('btn-pause').style.display = 'inline-flex';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    isPaused = false;
+    document.getElementById('btn-pause').textContent = '⏸️ Pause';
+    
+    showToast('Starting Selenium search... (This runs in background)', 'info');
+    try {
+      const res = await fetch('/api/search/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platforms: ['linkedin', 'naukri'] })
+      });
+      
+      if (pollIntervalId) clearInterval(pollIntervalId);
+      pollIntervalId = setInterval(pollSearchStatus, 1500);
+      pollSearchStatus();
+    } catch(e) {
+      showToast('Search failed or cancelled.', 'error');
+      resetSearchButtons();
+    }
+  }
+
+  // Trigger retry of only failed evaluations with built-in debouncing
+  let isRetryRequestActive = false;
+  async function triggerRetryFailed() {
+    if (isRetryRequestActive) return; // Debounce double clicks
+    isRetryRequestActive = true;
+    
+    const retryBtn = document.getElementById('btn-retry-failed');
+    retryBtn.disabled = true;
+    retryBtn.textContent = '⏳ Retrying...';
+    
+    document.getElementById('btn-run').style.display = 'none';
+    document.getElementById('btn-pause').style.display = 'inline-flex';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    isPaused = false;
+    document.getElementById('btn-pause').textContent = '⏸️ Pause';
+    
+    showToast('Retrying failed Gemini evaluations in background...', 'info');
+    try {
+      const res = await fetch('/api/search/retry-failed', { method: 'POST' });
+      if (res.ok) {
+        if (pollIntervalId) clearInterval(pollIntervalId);
+        pollIntervalId = setInterval(pollSearchStatus, 1500);
+        pollSearchStatus();
+      } else {
+        showToast('No failed jobs found or server busy.', 'warning');
+        resetSearchButtons();
+      }
+    } catch(e) {
+      showToast('Retry trigger failed.', 'error');
+      resetSearchButtons();
+    } finally {
+      isRetryRequestActive = false;
+      retryBtn.disabled = false;
+      retryBtn.textContent = '🔄 Retry Failed AI';
+    }
+  }
+
+  // Trigger LinkedIn Invitation Acceptance
+  let isAcceptRequestActive = false;
+  async function triggerAcceptInvitations() {
+    if (isAcceptRequestActive) return;
+    isAcceptRequestActive = true;
+    
+    const acceptBtn = document.getElementById('btn-accept-invitations');
+    acceptBtn.disabled = true;
+    acceptBtn.textContent = '⏳ Starting Accept Bot...';
+    
+    document.getElementById('btn-run').style.display = 'none';
+    document.getElementById('btn-pause').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'none';
+    isPaused = false;
+    
+    showToast('Starting LinkedIn Invitation Accept Bot...', 'info');
+    try {
+      const res = await fetch('/api/linkedin/accept-invitations', { method: 'POST' });
+      if (res.ok) {
+        if (pollIntervalId) clearInterval(pollIntervalId);
+        pollIntervalId = setInterval(pollSearchStatus, 1500);
+        pollSearchStatus();
+      } else {
+        const err = await res.json();
+        showToast(err.detail || 'Server busy or error.', 'warning');
+        resetSearchButtons();
+      }
+    } catch(e) {
+      showToast('Accept Bot failed to trigger.', 'error');
+      resetSearchButtons();
+    } finally {
+      isAcceptRequestActive = false;
+      acceptBtn.disabled = false;
+      acceptBtn.textContent = '🤝 Accept LinkedIn Invites';
+    }
+  }
+
+  // Clear data
+  async function clearData() {
+    if (!confirm("Are you sure you want to clear all jobs and vector database entries? This cannot be undone.")) return;
+    
+    showToast('Clearing database...', 'info');
+    try {
+      const res = await fetch('/api/jobs/clear', { method: 'POST' });
+      if (res.ok) {
+        showToast('Data cleared successfully!', 'success');
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        showToast('Failed to clear data.', 'error');
+      }
+    } catch (e) {
+      showToast('Error clearing data.', 'error');
+    }
+  }
+
+  // Filter by Status
+  function filterStatus(status) {
+    activeStatus = status;
+    currentPage = 1;
+    document.querySelectorAll('.filter-btn[onclick*="filterStatus"]').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.getAttribute('onclick').includes(`'${status}'`)) btn.classList.add('active');
+    });
+    fetchJobs();
+  }
+
+  // Mark job as applied
+  async function markApplied(jobId, btn) {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const oldText = btn.innerHTML;
+    btn.textContent = '⏳ ...';
+    try {
+      const res = await fetch(`/api/jobs/${jobId}/apply`, { method: 'POST' });
+      if (res.ok) {
+        showToast('Job marked as applied! Moving from active queue...', 'success');
+        const row = document.getElementById(`job-row-${jobId}`);
+        if (row) {
+          row.style.transition = 'all 0.5s ease';
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(50px)';
+          setTimeout(() => {
+            row.remove();
+            fetchJobs();
+          }, 500);
+        } else {
+          fetchJobs();
+        }
+      } else {
+        showToast('Failed to mark job as applied.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = oldText;
+      }
+    } catch (e) {
+      showToast('Error: Failed to connect to server.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = oldText;
+    }
+  }
+
+  // Mark job as ignored
+  async function markIgnored(jobId, btn) {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const oldText = btn.innerHTML;
+    btn.textContent = '⏳ ...';
+    try {
+      const res = await fetch(`/api/jobs/${jobId}/ignore`, { method: 'POST' });
+      if (res.ok) {
+        showToast('Job archived and ignored.', 'info');
+        const row = document.getElementById(`job-row-${jobId}`);
+        if (row) {
+          row.style.transition = 'all 0.5s ease';
+          row.style.opacity = '0';
+          row.style.transform = 'translateX(-50px)';
+          setTimeout(() => {
+            row.remove();
+            fetchJobs();
+          }, 500);
+        } else {
+          fetchJobs();
+        }
+      } else {
+        showToast('Failed to mark job as ignored.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = oldText;
+      }
+    } catch (e) {
+      showToast('Error: Failed to connect to server.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = oldText;
+    }
+  }
+
+  let isPaused = false;
+
+  async function togglePause() {
+    const btn = document.getElementById('btn-pause');
+    if (!isPaused) {
+      const res = await fetch('/api/search/pause', { method: 'POST' });
+      if (res.ok) {
+        isPaused = true;
+        btn.textContent = '▶️ Resume';
+        showToast('Search paused.', 'info');
+      }
+    } else {
+      const res = await fetch('/api/search/resume', { method: 'POST' });
+      if (res.ok) {
+        isPaused = false;
+        btn.textContent = '⏸️ Pause';
+        showToast('Search resumed.', 'info');
+      }
+    }
+  }
+
+  async function stopSearch() {
+    if (!confirm("Are you sure you want to stop the running search?")) return;
+    const res = await fetch('/api/search/stop', { method: 'POST' });
+    if (res.ok) {
+      showToast('Search stopped.', 'warning');
+      resetSearchButtons();
+    }
+  }
+
+  function resetSearchButtons() {
+    document.getElementById('btn-run').style.display = 'inline-flex';
+    document.getElementById('btn-retry-failed').style.display = 'inline-flex';
+    document.getElementById('btn-check-availability').style.display = 'inline-flex';
+    document.getElementById('btn-pause').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'none';
+    isPaused = false;
+    document.getElementById('btn-pause').textContent = '⏸️ Pause';
+  }
+
+  async function triggerAvailabilityCheck() {
+    if (!confirm("Check all 'New' jobs to see if they are still active on their respective platforms?")) return;
+    
+    document.getElementById('btn-run').style.display = 'none';
+    document.getElementById('btn-retry-failed').style.display = 'none';
+    document.getElementById('btn-check-availability').style.display = 'none';
+    document.getElementById('btn-stop').style.display = 'inline-flex';
+    
+    showToast('Starting availability check...', 'info');
+    try {
+      const res = await fetch('/api/jobs/check-availability', { method: 'POST' });
+      if (res.ok) {
+        if (pollIntervalId) clearInterval(pollIntervalId);
+        pollIntervalId = setInterval(pollSearchStatus, 1500);
+        pollSearchStatus();
+      } else {
+        showToast('System busy.', 'warning');
+        resetSearchButtons();
+      }
+    } catch(e) {
+      showToast('Check trigger failed.', 'error');
+      resetSearchButtons();
+    }
+  }
+
+  async function reEvaluateJob(jobId, button) {
+    const originalText = button.textContent;
+    button.textContent = '⏳...';
+    button.disabled = true;
+    showToast('Re-evaluating job with AI...', 'info');
+
+    try {
+      const res = await fetch(`/api/jobs/${jobId}/evaluate`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Failed to re-evaluate');
+      }
+      const data = await res.json();
+      
+      // Update UI row dynamically
+      const row = document.getElementById(`job-row-${jobId}`);
+      if (row) {
+        // 1. Update Score
+        const scoreSpan = row.querySelector('.score');
+        if (scoreSpan) {
+          const roundedScore = Math.round(data.match_score);
+          scoreSpan.textContent = `${roundedScore}%`;
+          scoreSpan.className = `score ${roundedScore >= 85 ? 'high' : (roundedScore >= 70 ? 'med' : 'low')}`;
+        }
+
+        // 2. Update Missing Skills
+        const skillsContainer = row.querySelector('.missing-skills-container');
+        if (skillsContainer) {
+          if (data.missing_skills && data.missing_skills.length > 0) {
+            skillsContainer.innerHTML = `
+              <div style="font-size: 0.7rem; color: var(--danger); margin-top: 0.25rem;">
+                Missing: ${data.missing_skills.join(', ')}
+              </div>
+            `;
+          } else {
+            skillsContainer.innerHTML = '';
+          }
+        }
+
+        // 3. Update Details
+        const detailsDiv = row.querySelector('[data-label="Details"] div');
+        if (detailsDiv) {
+          detailsDiv.textContent = data.readiness_assessment || 'No assessment available';
+        }
+      }
+
+      showToast('Evaluation updated successfully!', 'success');
+    } catch(e) {
+      showToast(e.message || 'Error running evaluation.', 'error');
+    } finally {
+      button.textContent = originalText;
+      button.disabled = false;
+    }
+  }
+
+  function toggleDetails(element) {
+    element.classList.toggle('expanded');
+  }
+
+  // Draft drawer
+  async function openDraft(jobId, title, company) {
+    document.getElementById('drawer-title').textContent = `Draft for: ${title}`;
+    currentDraftJobId = jobId;
+    document.getElementById('cover-letter-text').value = 'Generating…';
+    document.getElementById('readiness-text').textContent = 'Loading...';
+    document.getElementById('overlay').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+
+    try {
+      const jobRes = await fetch(`/api/jobs/${jobId}`);
+      const job = await jobRes.json();
+      if (job) {
+        document.getElementById('readiness-text').textContent = job.readiness_assessment || 'No assessment available';
+      }
+
+      // If Naukri, fetch real screening questions section
+      const questionsContainer = document.getElementById('screening-questions-container');
+      if (questionsContainer) {
+        if (job.platform === 'naukri') {
+          fetchNaukriQuestions(jobId);
+        } else {
+          questionsContainer.innerHTML = '<p class="text-muted">No screening questions detected.</p>';
+        }
+      }
+
+      // Then fetch draft
+      const res = await fetch(`/api/jobs/${jobId}/draft`, { method: 'POST' });
+      const data = await res.json();
+      document.getElementById('cover-letter-text').value = data.cover_letter || '';
+    } catch(e) {
+      document.getElementById('cover-letter-text').value = 'Error generating draft. Try again.';
+    }
+  }
+
+  function closeDraft() {
+    document.getElementById('overlay').classList.remove('open');
+    document.getElementById('drawer').classList.remove('open');
+  }
+
+  function copyDraft() {
+    const text = document.getElementById('cover-letter-text').value;
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!', 'success'));
+  }
+
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show ' + type;
+    setTimeout(() => t.className = '', 3000);
+  }
+
+  // On page load, check if background search is active
+  (async () => {
+    try {
+      const res = await fetch('/api/search/status');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.running) {
+          pollIntervalId = setInterval(pollSearchStatus, 1500);
+          pollSearchStatus();
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch initial status: ", e);
+    }
+  })();
+</script>
+</body>
+</html>
